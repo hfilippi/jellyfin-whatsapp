@@ -1,0 +1,12 @@
+[
+    {
+        "username": "admin",
+        "phone": "5491155555555",
+        "enabled": true
+    },
+    {
+        "username": "guest",
+        "phone": "5491100000000",
+        "enabled": false
+    }
+]
