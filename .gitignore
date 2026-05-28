@@ -1,0 +1,2 @@
+# Ignore local sensitive configuration and user database
+config/
