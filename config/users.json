@@ -1,47 +1,12 @@
 [
     {
-        "username": "hfilippi",
-        "phone": "5491156344399",
-		"enabled": true
+        "username": "admin",
+        "phone": "5491155555555",
+        "enabled": true
     },
     {
-        "username": "Andre",
-        "phone": "5493489482589",
-		"enabled": true
-    },
-    {
-        "username": "Ayme",
-        "phone": "5491134736962",
-		"enabled": true
-    },
-    {
-        "username": "Coto",
-        "phone": "5493489589841",
-		"enabled": true
-    },
-    {
-        "username": "Cristi",
-        "phone": "5493489555155",
-		"enabled": true
-    },
-    {
-        "username": "Dory",
-        "phone": "5493489629213",
-		"enabled": true
-    },
-    {
-        "username": "Laureano",
-        "phone": "5491157801660",
-		"enabled": true
-    },
-    {
-        "username": "Alexis",
-        "phone": "5492215521867",
-		"enabled": true
-    },
-    {
-        "username": "Rioja",
-        "phone": "5491140431424",
-		"enabled": true
+        "username": "guest",
+        "phone": "5491100000000",
+        "enabled": false
     }
 ]
