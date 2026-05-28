@@ -53,13 +53,16 @@ Both environments read core parameters from a single setup file in `/config/conf
 
 ```json
 {
+    "app_name": "Notifications Engine",
+    "app_version": "1.0.0",
     "jellyfin_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
     "api_key": "YOUR_JELLYFIN_API_KEY_HERE",
     "bot_number": "YOUR_PHONE_NUMBER_HERE",
     "group_interval_seconds": 60,
     "start_hour": 10,
     "end_hour": 22,
-    "timezone": "America/Argentina/Buenos_Aires"
+    "timezone": "America/Argentina/Buenos_Aires",
+    "language": "es"
 }
 ```
 
