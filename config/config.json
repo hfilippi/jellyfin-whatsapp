@@ -1,6 +1,6 @@
 {
-    "app_name": "Raspiflix Notifications Engine",
-    "app_version": "2.0.0",
+    "app_name": "Notifications Engine",
+    "app_version": "1.0.0",
     "jellyfin_url": "http://[YOUR_SERVER_URL_HERE]:[YOUR_PORT_HERE]",
     "api_key": "[YOUR_JELLYFIN_API_KEY_HERE]",
     "bot_number": "5491155555555",
