@@ -1,0 +1,16 @@
+services:
+  jellyfin-whatsapp:
+    container_name: jellyfin-whatsapp
+    build:
+      context: /srv/dev-disk-by-uuid-12D8CC51D8CC352F/docker/jellyfin-whatsapp
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    shm_size: "1gb"
+    volumes:
+      - /srv/dev-disk-by-uuid-12D8CC51D8CC352F/docker/jellyfin-whatsapp/data:/data
+      - /srv/dev-disk-by-uuid-12D8CC51D8CC352F/docker/jellyfin-whatsapp/config:/config
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      PYTHONUNBUFFERED: "1"
