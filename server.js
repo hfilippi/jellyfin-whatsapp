@@ -35,7 +35,7 @@ const client = new Client({
 
 client.on('qr', (qr) => {
     console.log('\n==============================');
-    console.log('\n======== SCAN QR ========\n');
+    console.log('\n========== SCAN  QR ==========\n');
     console.log('==============================\n');
 
     qrcode.generate(qr, {
@@ -63,7 +63,7 @@ client.on('disconnected', reason => {
 });
 
 client.on('message', async msg => {
-    if (msg.body.toLowerCase().startsWith('salir')) {
+    if (msg.body.toLowerCase().startsWith('unsubscribe')) {
         const senderPhone = msg.from.replace(/\D/g, '');
 
         if (senderPhone) {
@@ -73,7 +73,10 @@ client.on('message', async msg => {
                 let userUpdated = false;
 
                 const updatedUsers = users.map(user => {
-                    if (user.phone === senderPhone) {
+                    const cleanUserPhone = user.phone.slice(-10);
+                    const cleanSenderPhone = senderPhone.slice(-10);
+
+                    if (cleanUserPhone === cleanSenderPhone) {
                         if (user.enabled !== false) {
                             user.enabled = false;
                             userUpdated = true;
@@ -84,7 +87,7 @@ client.on('message', async msg => {
 
                 if (userUpdated) {
                     fs.writeFileSync(USERS_PATH, JSON.stringify(updatedUsers, null, 4));
-                    await msg.reply('👋🏻 Fuiste dado de baja de las notificaciones de Raspiflix.');
+                    await msg.reply('👋🏻 Fuiste dado de baja de las notificaciones.');
                     console.log(`🔕 User ${senderPhone} unsubscribed successfully`);
                 } else {
                     console.log(`⚠️ The number ${senderPhone} sent "unsubscribe" but was not active or not found in users.json`);

@@ -1,8 +1,9 @@
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Jellyfin](https://img.shields.io/badge/Media_Server-Jellyfin-magenta?style=for-the-badge&logo=jellyfin&logoColor=white&labelColor=AA5CC4)](https://jellyfin.org/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Jellyfin](https://img.shields.io/badge/Media_Server-Jellyfin-magenta?style=flat&logo=jellyfin&logoColor=white&labelColor=AA5CC4)](https://jellyfin.org/)
+[![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-A22846?style=flat&logo=raspberrypi&logoColor=white)](https://www.raspberrypi.org/)
 
 # 🍿 jellyfin-whatsapp
 
@@ -25,6 +26,7 @@ The system features a **decoupled architecture** split into two main containeriz
 * **Quiet Hours Shield:** Automatically holds back notifications received during late-night hours. Pending media aggregates silently in memory and flushes immediately as a single summary once morning hours kick in.
 * **One-Click Unsubscribe Link:** Every single notification message attaches a dynamically-built, native WhatsApp deep-link (`wa.me`) passing a unique cancellation payload. 
 * **Local-First Architecture:** Eliminates complex database management. Subscriptions and runtime parameters are fully handled via lightweight, localized, system-synced JSON layers.
+* **Anti-Ban & Smart Throttling System:** Multi-layered, human-like throttling and randomization strategy across the Python and Node.js layers.
 
 ---
 
@@ -53,11 +55,14 @@ Both environments read core parameters from a single setup file in `/config/conf
 
 ```json
 {
-    "app_name": "Notifications Engine",
+    "app_name": "Notifications Engine Example",
     "app_version": "1.0.0",
-    "jellyfin_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
-    "api_key": "YOUR_JELLYFIN_API_KEY_HERE",
-    "bot_number": "YOUR_PHONE_NUMBER_HERE",
+    "jellyfin": {
+        "server_name": "YOUR_SERVER_NAME_HERE",
+        "server_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
+        "api_key": "YOUR_PHONE_NUMBER_HERE"
+    },
+    "whatsapp_bot_number": "YOUR_PHONE_NUMBER_HERE",
     "group_interval_seconds": 60,
     "start_hour": 10,
     "end_hour": 22,
@@ -66,12 +71,14 @@ Both environments read core parameters from a single setup file in `/config/conf
 }
 ```
 
-### 📱 `bot_number` format
+### 📱 `whatsapp_bot_number` format
 
-- **2 digits** for international country code.
-- **1 digit**  for mobile prefix required for international calls mobile lines.
-- **2 digits** for Area code.
-- **8 digits** for unique 8-digit local subscriber number.
+🇦🇷 Argentinian, Buenos Aires phone number `5491155555555` example:
+
+- **54** for international country code.
+- **9**  for mobile prefix required for international calls mobile lines.
+- **11** for Area code.
+- **55555555** for unique 8-digit local subscriber number.
 
 ---
 
@@ -115,11 +122,35 @@ Control access manually by populating your subscriber base within this directory
 ### 🔕 3. Unsubscribe Lifecycle
 
 - The user clicks the built-in deep link inside their WhatsApp notification message:
-https://wa.me/{bot_number}?text=Salir%20{user_phone}
+https://wa.me/{bot_number}?text=Unsubscribe%20{user_phone}%20-%20{uuid}
 - The user sends the pre-filled text.
-- The Node.js service intercepts the command "salir <phone>".
+- The Node.js service intercepts the command "Unsubscribe <phone> - <uuid>".
 - It reads `/config/users.json`, searches for the target number, and flips their permission key to "enabled": false.
 - The Python engine instantly recognizes the status mutation on the subsequent iteration loop and skips sending upcoming packages.
+
+### 🛡️ 4. Anti-Ban & Smart Throttling System
+
+Sending automated notifications via WhatsApp Web clients carries an inherent risk of account suspension if the behavior triggers Meta's anti-spam algorithms. To mitigate this, **Raspiflix Notifications Engine** implements a multi-layered, human-like throttling and randomization strategy across the Python and Node.js layers.
+
+### Key Defense Mechanisms
+
+* **Message Pooling & Batching (`IntervalTrigger`)**
+    Instead of blasting messages instantly every time a single file finishes downloading on Jellyfin (which generates unnatural spikes in activity), incoming webhook payloads are safely locked (`threading.Lock`) and appended to a pending queue. The background scheduler processes and groups these items into a single consolidated digest message at set intervals (e.g., every 3600 seconds).
+
+* **Dynamic Spintax Resolution**
+    Sending the exact same string to dozens of users is a surefire way to trigger fingerprinting filters. The template engine utilizes nested Spintax rotation (e.g., `{🍿 ¡Disponible ahora!|🎬 ¡Estreno!}`) to dynamically generate distinct greeting and introduction combinations for every single outgoing message.
+
+* **Unique Message Footprints (UUID Shuffling)**
+    Every notification generates an ephemeral 8-character `uuid4` tracking ID injected into the custom WhatsApp chat-deep-link (`wa.me/?text=...`). Because this ID changes per user, no two messages sent in a single batch are byte-for-byte identical, rendering signature-based automated spam filters ineffective.
+
+* **The Anti-Ban Shield (Randomized Jitter Delay)**
+    Between every single individual recipient message, the processor applies a dynamic, randomized pause (`random.randint(5, 20)`). This "jitter" effectively breaks rigid timing signatures, perfectly mimicking a human operator typing and sending messages sequentially.
+
+* **Smart Time Window Filtering**
+    The system respects natural human circadian rhythms by checking the configured `START_HOUR` and `END_HOUR` relative to the target `TIMEZONE`. Messages queued outside this window are automatically deferred, preventing anomalous midnight broadcasting.
+
+* **Session Persistence via `LocalAuth`**
+    The underlying Node.js `whatsapp-web.js` service stores persistent session keys inside `/data/session`. This avoids frequent, rapid QR-code re-authentications which Meta heavily flags on automated headless browser nodes.
 
 ---
 
@@ -133,3 +164,6 @@ Terminal execution traces utilize decoupled visual states via explicit ANSI esca
 - 🔴 RED: Formatting issues, invalid configuration inputs, or critical system exceptions.
 
 ---
+
+## 🌐 Language support (so far)
+ - 🇪🇸 `Spanish`
