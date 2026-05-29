@@ -10,5 +10,5 @@ def print_startup_banner(app_name, app_version):
 |__/          |___/                                                    |_|    
     """
     print(f"{LogColor.MAGENTA}{banner}{LogColor.RESET}")
-    print(f"{LogColor.CYAN}🎬 {app_name} v{app_version}{LogColor.RESET}")
+    print(f"{LogColor.CYAN}🍿 {app_name} v{app_version}{LogColor.RESET}")
     print()
