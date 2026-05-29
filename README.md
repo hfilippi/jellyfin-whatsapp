@@ -59,7 +59,7 @@ Both environments read core parameters from a single setup file in `/config/conf
     "jellyfin": {
         "server_name": "YOUR_SERVER_NAME_HERE",
         "server_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
-        "api_key": "YOUR_PHONE_NUMBER_HERE"
+        "api_key": "YOUR_API_KEY_HERE"
     },
     "whatsapp_bot_number": "YOUR_PHONE_NUMBER_HERE",
     "group_interval_seconds": 60,
