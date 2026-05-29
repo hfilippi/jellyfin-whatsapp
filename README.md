@@ -56,7 +56,6 @@ Both environments read core parameters from a single setup file in `/config/conf
 ```json
 {
     "app_name": "Notifications Engine Example",
-    "app_version": "1.0.0",
     "jellyfin": {
         "server_name": "YOUR_SERVER_NAME_HERE",
         "server_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
