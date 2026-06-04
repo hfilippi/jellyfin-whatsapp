@@ -1,7 +1,7 @@
 services:
   jellyfin-whatsapp:
     container_name: jellyfin-whatsapp
-    image: jellyfin-whatsapp:${APP_VERSION:-2.1.0}
+    image: jellyfin-whatsapp:${APP_VERSION:-latest}
     build:
       context: /srv/dev-disk-by-uuid-12D8CC51D8CC352F/docker/jellyfin-whatsapp
       args:
