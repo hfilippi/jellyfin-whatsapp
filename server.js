@@ -146,10 +146,6 @@ app.post('/send-media', async (request, response) => {
 
         const media = await getMediaFromUrl(image_url);
 
-        return response.status(503).json({
-            error: 'WhatsApp Client is not ready yet'
-        });
-
         await client.sendMessage(
             chatId,
             media,
