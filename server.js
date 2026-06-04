@@ -12,28 +12,34 @@ app.use(express.json());
 
 const USERS_PATH = '/config/users.json';
 
-process.env.PUPPETEER_EXECUTABLE_PATH = '/usr/bin/chromium-shell';
-
 const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '/data/session'
     }),
     puppeteer: {
         headless: true,
-        executablePath: '/usr/bin/chromium-shell',
-        timeout: 120000,
+        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium-shell',
+        timeout: 180000,
+        protocolTimeout: 180000,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
             '--disable-gpu',
+            '--no-first-run',
+            '--no-zygote',
             '--single-process',
-            '--no-zygote'
+            '--disable-extensions',
+            '--ignore-certificate-errors',
+            '--no-default-browser-check'
         ]
     }
 });
 
 client.on('qr', (qr) => {
+    console.log('\n📲 [AUTH_NEEDED] Session not found! Generating QR code to scan...\n');
+
     console.log('\n==============================');
     console.log('\n========== SCAN  QR ==========\n');
     console.log('==============================\n');
@@ -45,21 +51,35 @@ client.on('qr', (qr) => {
 
 let isReady = false;
 
+console.log('🚀 [INIT] Launching Chromium and connecting to browser...');
+
+client.on('loading_screen', (percent, message) => {
+    if (isReady) return;
+
+    const totalBars = 20;
+    const completed = Math.round((percent / 100) * totalBars);
+    const remaining = totalBars - completed;
+    
+    const progressBar = '█'.repeat(completed) + '░'.repeat(remaining);
+    
+    console.log(`⏳ [PROGRESS] WhatsApp Loading: [${progressBar}] ${percent}% | ${message}`);
+});
+
 client.on('ready', () => {
     isReady = true;
-    console.log('✅ WhatsApp connected!');
+    console.log('✅ [READY] Raspiflix WhatsApp Gateway ONLINE and ready to send alerts!');
 });
 
 client.on('authenticated', () => {
-    console.log('🔐 WhatsApp authenticated!');
+    console.log('🔐 [AUTH] Existing WhatsApp session detected and successfully authenticated!');
 });
 
 client.on('auth_failure', msg => {
-    console.error('❌ Authentication failure:', msg);
+    console.error('❌ [ERROR] Authentication failure:', msg);
 });
 
 client.on('disconnected', reason => {
-    console.error('⚠️ WhatsApp disconnected:', reason);
+    console.error('⚠️ [WARN] WhatsApp disconnected:', reason);
 });
 
 client.on('message', async msg => {
@@ -115,16 +135,20 @@ app.post('/send-media', async (request, response) => {
             });
         }
 
-        const normalizedTo = to.replace(/\D/g, '');
-        const chatId = `${normalizedTo}@c.us`;
-
-        const media = await getMediaFromUrl(image_url);
-
         if (!isReady) {
             return response.status(503).json({
                 error: 'WhatsApp Client is not ready yet'
             });
         }
+
+        const normalizedTo = to.replace(/\D/g, '');
+        const chatId = `${normalizedTo}@c.us`;
+
+        const media = await getMediaFromUrl(image_url);
+
+        return response.status(503).json({
+            error: 'WhatsApp Client is not ready yet'
+        });
 
         await client.sendMessage(
             chatId,
@@ -161,5 +185,5 @@ async function getMediaFromUrl(url) {
 }
 
 app.listen(3000, () => {
-    console.log('🚀 WhatsApp listening on port 3000...');
+    console.log('📡 WhatsApp listening on port 3000...');
 });
