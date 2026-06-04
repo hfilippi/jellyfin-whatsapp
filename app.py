@@ -162,8 +162,8 @@ def process_pending():
             apply_anti_ban_delay()
 
 def apply_anti_ban_delay():
-    seconds = random.randint(5, 20)
-    print(f"{LogColor.CYAN}🛡️ Anti-ban shield: Waiting {seconds}s before next message...{LogColor.RESET}")
+    seconds = random.randint(10, 30)
+    print(f"{LogColor.CYAN}🛡️  Anti-ban shield: Waiting {seconds}s before next message...{LogColor.RESET}")
     time.sleep(seconds)
 
 # =========================
