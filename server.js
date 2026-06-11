@@ -101,7 +101,7 @@ client.on('loading_screen', (percent, message) => {
 // Handle client ready event with a flag to prevent multiple logs and ensure the client is fully ready before accepting requests
 client.on('ready', () => {
     isReady = true;
-    console.log('✅ [READY] Raspiflix WhatsApp Gateway ONLINE and ready to send alerts!');
+    console.log('✅ [READY] WhatsApp Gateway ONLINE and ready to send alerts!');
 });
 
 // Handle existing authenticated sessions without requiring QR code scanning, with informative logging
