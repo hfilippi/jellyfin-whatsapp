@@ -295,6 +295,8 @@ Terminal execution traces utilize decoupled visual states via explicit ANSI esca
 - 🟡 YELLOW: Security exemptions, system skips, or users containing disabled permission flags.
 - 🔴 RED: Formatting issues, invalid configuration inputs, or critical system exceptions.
 
+![Log](img/log.png)
+
 ---
 
 ## 🌐 Language support (so far)
