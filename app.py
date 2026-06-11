@@ -19,14 +19,17 @@ import urllib.parse
 import uuid
 import time
 
+# Initialize FastAPI app
 app = FastAPI()
 
 # =========================
-# LOAD CONFIG
+# LOAD CONFIG AND TEMPLATES
 # =========================
 
 CONFIG_PATH = "/config/config.json"
+TEMPLATES_PATH = '/config/templates.json'
 
+# Load configuration with error handling for missing file, invalid JSON, and other exceptions
 try:
     with open(CONFIG_PATH, "r") as f:
         CONFIG = json.load(f)
@@ -129,6 +132,10 @@ def process_pending():
     enabled_users = [user for user in users if user.get("enabled", True)]
     total_users = len(enabled_users)
 
+    tmdb_id = None
+    if len(items) == 1:
+        tmdb_id = items[0].get("Provider_tmdb")
+
     for index, user in enumerate(enabled_users):
         try:
             user_name = user.get("username", "")
@@ -138,16 +145,26 @@ def process_pending():
                 print(f"{LogColor.YELLOW}⚠️ Skipping user '{user_name}' due to missing phone number{LogColor.RESET}")
                 continue
 
-            message = build_message(items, user_name=user_name, user_phone=user_phone)
+            message, unsubscribe_link = build_message(items, user_name=user_name, user_phone=user_phone)
 
             item_id = items[0].get("ItemId") or items[0].get("Id")
             poster_url = f"{JELLYFIN_SERVER_URL}/Items/{item_id}/Images/Primary?api_key={JELLYFIN_API_KEY}"
 
             print(f"{LogColor.BLUE}📬 Sending message to {user_name} ({user_phone})...{LogColor.RESET}")
 
+            payload = {
+                "to": user_phone,
+                "caption": message,
+                "image_url": poster_url,
+                "unsubscribe_link": unsubscribe_link
+            }
+
+            if tmdb_id:
+                payload["tmdb_id"] = tmdb_id
+
             response = requests.post(
                 WHATSAPP_API,
-                json={"to": user_phone, "caption": message, "image_url": poster_url},
+                json=payload,
                 timeout=15
             )
 
@@ -170,15 +187,33 @@ def apply_anti_ban_delay():
 # MESSAGE BUILDER
 # =========================
 
+def load_templates():
+    default_templates = {
+        "single_item": "{🍿 ¡Disponible ahora en Raspiflix!|🎬 ¡Estreno en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}\n\n{👋 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }{{user_name}}\n\n🎞️ *{{title}}{{year_str}}*\n\n{{genres}}{{imdb_url}}",
+        "multiple_items": "{🍿 ¡Disponibles ahora en Raspiflix!|🎬 ¡Estrenos en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}\n\n{👋 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }{{user_name}}\n\n{{titles}}"
+    }
+
+    if os.path.exists(TEMPLATES_PATH):
+        try:
+            with open(TEMPLATES_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"{LogColor.YELLOW}⚠️ Failed to load templates.json from '{TEMPLATES_PATH}', using default: {e}{LogColor.RESET}")
+    return default_templates
+
 def build_message(items, user_name="", user_phone=None):
     notification_id = str(uuid.uuid4())[:8]
     unsubscribe_link = ""
 
+    # Unsubscribe text with spintax and URL encoding
     if user_phone:
         unsubscribe_text = f"Unsubscribe {user_phone} - _{notification_id}_"
         encoded_text = urllib.parse.quote(unsubscribe_text)
         unsubscribe_spintax = resolve_spintax("{🚨 Darme de baja:|❌ Cancelar suscripción:|🔕 No recibir más avisos:}")
         unsubscribe_link = f"\n\n{unsubscribe_spintax} https://wa.me/{WHATSAPP_BOT_NUMBER}?text={encoded_text}"
+
+    # Load templates (with fallback to defaults)
+    templates = load_templates()
 
     if len(items) == 1:
         item = items[0]
@@ -190,14 +225,16 @@ def build_message(items, user_name="", user_phone=None):
         imdb_id = item.get("Provider_imdb")
         imdb_url = f"\n\n🌐 {IMDB_URL.format(imdb_id)}" if imdb_id else ""
 
-        message_template = (
-            f"{{🍿 ¡Disponible ahora en {JELLYFIN_SERVER_NAME}!|🎬 ¡Estreno en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}}\n\n"
-            f"{{👋🏻 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }}{user_name}\n\n"
-            f"🎞️ *{title}{year_str}*\n\n"
-            f"{genres}{imdb_url}{unsubscribe_link}"
+        message_template = templates.get("single_item")
+        message = (message_template
+            .replace("{{user_name}}", user_name)
+            .replace("{{title}}", title)
+            .replace("{{year_str}}", year_str)
+            .replace("{{genres}}", genres)
+            .replace("{{imdb_url}}", imdb_url)
         )
 
-        return resolve_spintax(message_template)
+        return resolve_spintax(message), unsubscribe_link
     else:
         titles = []
         for i in items:
@@ -205,22 +242,24 @@ def build_message(items, user_name="", user_phone=None):
             year_str = f" ({year})" if year else ""
             titles.append(f"🎞️ *{i.get('Name', 'Unknown Title')}{year_str}*")
 
-        message_template = (
-            f"{{🍿 ¡Disponibles ahora en {JELLYFIN_SERVER_NAME}!|🎬 ¡Estrenos en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}}\n\n"
-            f"{{👋🏻 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }}{user_name}\n\n"
-            f"{chr(10).join(titles)}{unsubscribe_link}"
+        message_template = templates.get("multiple_items")
+        message = (message_template
+            .replace("{{user_name}}", user_name)
+            .replace("{{titles}}", chr(10).join(titles))
         )
 
-        return resolve_spintax(message_template)
+        return resolve_spintax(message), unsubscribe_link
 
 def resolve_spintax(text: str) -> str:
     pattern = re.compile(r'\{([^{}]+)\}')
+    
     while True:
         match = pattern.search(text)
         if not match:
             break
         options = match.group(1).split('|')
         text = text.replace(match.group(0), random.choice(options), 1)
+    
     return text
 
 # =========================

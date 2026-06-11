@@ -1,0 +1,5 @@
+{
+  "single_item": "{🍿 ¡Disponible ahora en Raspiflix!|🎬 ¡Estreno en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}\n\n{👋 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }{{user_name}}\n\n🎞️ *{{title}}{{year_str}}*\n\n{{genres}}{{imdb_url}}",
+  "multiple_items": "{🍿 ¡Disponibles ahora en Raspiflix!|🎬 ¡Estrenos en la plataforma!|🎥 Mirá lo nuevo en Jellyfin}\n\n{👋 ¡Hola! |🎉 ¡Buenas! |✨ Hola, ¿cómo estás? }{{user_name}}\n\n{{titles}}",
+  "final_structure": "{{caption}}{{trailer}}{{unsubscribe}}"
+}
