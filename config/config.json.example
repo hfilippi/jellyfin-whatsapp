@@ -5,6 +5,11 @@
         "server_url": "http://YOUR_SERVER_URL_HERE:YOUR_PORT_HERE",
         "api_key": "YOUR_API_KEY_HERE"
     },
+    "tmdb": {
+        "api_key": "YOUR_TMDB_API_KEY_HERE",
+        "language": "es",
+        "send_trailers": true
+    },
     "whatsapp_bot_number": "YOUR_PHONE_NUMBER_HERE",
     "group_interval_seconds": 60,
     "start_hour": 10,
