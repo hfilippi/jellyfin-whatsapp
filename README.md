@@ -1,5 +1,6 @@
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-A22846?style=flat&logo=raspberrypi&logoColor=white)](https://www.raspberrypi.org/)
 [![Jellyfin](https://img.shields.io/badge/Media_Server-Jellyfin-magenta?style=flat&logo=jellyfin&logoColor=white&labelColor=AA5CC4)](https://jellyfin.org/)
+[![Listed on JellyWatch Hub](https://jellywatch.app/hub/jellyfin-whatsapp/badge.svg)](https://jellywatch.app/hub/jellyfin-whatsapp)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
@@ -10,6 +11,13 @@
 A decoupled, lightweight notification engine built for Raspberry Pi to automatically aggregate newly added media from **Jellyfin** and send structured updates with official poster art to users via **WhatsApp**.
 
 ![Example](img/example.png)
+
+Would you like to automatically notify your friends and family whenever new content is added to your library?
+This tool allows your Jellyfin users to receive updates about your latest additions via WhatsApp.
+
+Surprise them with new releases, childhood movies you used to share, or those classics everyone wants to watch again. Everything is handled automatically, securely, and non-intrusively.
+
+*This is an open-source project under the MIT license, allowing anyone to improve it, contribute new features, or customize it to their needs.*
 
 ---
 
