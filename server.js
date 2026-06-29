@@ -14,6 +14,7 @@ const CONFIG_PATH = '/config/config.json';
 const TEMPLATES_PATH = '/config/templates.json';
 
 let finalStructureTemplate = "{{caption}}{{trailer}}{{unsubscribe}}";
+let trailerBlockTemplate = "\n\n🎬 Trailer: {{trailer_url}}";
 let tmdbConfig = {};
 
 // Load templates and TMDB config on startup, with error handling and fallbacks
@@ -23,6 +24,7 @@ function loadConfigsOnStartup() {
         try {
             const templates = JSON.parse(fs.readFileSync(TEMPLATES_PATH, 'utf8'));
             finalStructureTemplate = templates.final_structure || finalStructureTemplate;
+            trailerBlockTemplate = templates.trailer_block || trailerBlockTemplate;
         } catch (error) {
             console.error('⚠️ [WARN] Failed to parse templates.json, using default structure:', error);
         }
@@ -182,6 +184,7 @@ app.post('/send-media', async (request, response) => {
             return response.status(503).json({ error: 'WhatsApp Client is not ready yet' });
         }
 
+        // Normalize the phone number to ensure it only contains digits and construct the chat ID for WhatsApp
         const normalizedTo = to.replace(/\D/g, '');
         const chatId = `${normalizedTo}@c.us`;
 
@@ -189,9 +192,16 @@ app.post('/send-media', async (request, response) => {
         const media = await getMediaFromUrl(image_url);
         const trailerUrl = await getTrailerUrl(tmdb_id);
 
+        // Construct the final caption with optional trailer block and unsubscribe link
+        let trailerBlock = '';
+        if (trailerUrl) {
+            trailerBlock = trailerBlockTemplate.replace("{{trailer_url}}", trailerUrl);
+        }
+
+        // Construct the final caption with optional trailer block and unsubscribe link
         let fullCaption = finalStructureTemplate
             .replace("{{caption}}", caption)
-            .replace("{{trailer}}", trailerUrl ? `\n\n🎬 Trailer: ${trailerUrl}` : '')
+            .replace("{{trailer}}", trailerBlock)
             .replace("{{unsubscribe}}", unsubscribe_link ? unsubscribe_link : '');
 
         await client.sendMessage(chatId, media, { caption: fullCaption });
@@ -220,9 +230,17 @@ async function getMediaFromUrl(url) {
     }
 }
 
+// Cache for trailer URLs to avoid repeated API calls for the same TMDB ID
+const trailerCache = new Map();
+
 // Helper function to fetch trailer URL from TMDB API based on tmdbId, with support for language fallback and error handling
 async function getTrailerUrl(tmdbId) {
     if (!tmdbId) return null;
+
+    // Check if the trailer URL is already cached for the given TMDB ID
+    if (trailerCache.has(tmdbId)) {
+        return trailerCache.get(tmdbId);
+    }
 
     try {
         if (tmdbConfig.send_trailers === false) {
@@ -254,14 +272,28 @@ async function getTrailerUrl(tmdbId) {
             video = tmdbResponse.data.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
         }
 
+        // Construct the YouTube trailer URL if a trailer is found
+        const trailerUrl = video ? `https://youtu.be/${video.key}` : null;
+
         console.log(`🎬 [TMDB] Trailer fetch for TMDB ID ${tmdbId}: ${video ? 'Found' : 'Not Found'}`);
 
-        return video ? `https://youtu.be/${video.key}` : null;
+        // Cache the trailer URL for future requests
+        trailerCache.set(tmdbId, trailerUrl);
+
+        return trailerUrl;
     } catch (err) {
         console.error('⚠️ [WARN] Failed to fetch trailer from TMDB:', err.message);
         return null;
     }
 }
+
+// Periodically clear the trailer cache to prevent memory bloat, with logging for transparency
+setInterval(() => {
+    if (trailerCache.size > 0) {
+        console.log(`🧹 [CACHE] Clearing trailer cache with ${trailerCache.size} entries...`);
+        trailerCache.clear();
+    }
+}, 10800000); // Clear cache every 3 hours
 
 // Start the Express server to listen for incoming requests from the Python app
 app.listen(3000, () => {
