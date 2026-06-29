@@ -47,9 +47,10 @@ const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '/data/session'
     }),
+    authTimeoutMs: 120000,
     puppeteer: {
         headless: true,
-        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium-shell',
+        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium',
         timeout: 180000,
         protocolTimeout: 180000,
         args: [
@@ -60,10 +61,13 @@ const client = new Client({
             '--disable-gpu',
             '--no-first-run',
             '--no-zygote',
-            '--single-process',
             '--disable-extensions',
             '--ignore-certificate-errors',
-            '--no-default-browser-check'
+            '--no-default-browser-check',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--font-render-hinting=none'
         ]
     }
 });
