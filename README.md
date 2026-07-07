@@ -6,7 +6,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 
-# 🍿 jellyfin-whatsapp [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M1N62166OY)
+# 🍿jellyfin-whatsapp [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M1N62166OY)
 
 A decoupled, lightweight notification engine built for Raspberry Pi to automatically aggregate newly added media from **Jellyfin** and send structured updates with official poster art to users via **WhatsApp**.
 
@@ -302,6 +302,7 @@ Terminal execution traces utilize decoupled visual states via explicit ANSI esca
 - 🔵 BLUE: Outgoing messaging actions targeting remote client connections.
 - 🟡 YELLOW: Security exemptions, system skips, or users containing disabled permission flags.
 - 🔴 RED: Formatting issues, invalid configuration inputs, or critical system exceptions.
+<br><br>
 
 ![Log](img/log.png)
 
@@ -310,6 +311,14 @@ Terminal execution traces utilize decoupled visual states via explicit ANSI esca
 ## 🌐 Language support (so far)
 
 - 🇪🇸 `Spanish`
+
+---
+
+## 👨‍💻 Thanks!
+
+> [!NOTE]
+> **🍿 jellyfin-whatsapp** *uses wppconnect-team/wa-version.*
+> Please visit https://github.com/wppconnect-team/wa-version
 
 ---
 

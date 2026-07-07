@@ -49,12 +49,16 @@ const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '/data/session'
     }),
-    authTimeoutMs: 120000,
+    authTimeoutMs: 300000,
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html'
+    },
     puppeteer: {
         headless: true,
         executablePath: process.env.CHROME_BIN || '/usr/bin/chromium',
-        timeout: 180000,
-        protocolTimeout: 180000,
+        timeout: 600000, // 10 minutes
+        protocolTimeout: 600000,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -69,7 +73,11 @@ const client = new Client({
             '--disable-background-timer-throttling',
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding',
-            '--font-render-hinting=none'
+            '--font-render-hinting=none',
+            '--disable-software-rasterizer',
+            '--disable-features=site-per-process',
+            '--js-flags=--max-old-space-size=512 --max-semi-space-size=64',
+            '--compression-dict-transport=disabled'
         ]
     }
 });

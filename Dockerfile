@@ -29,7 +29,7 @@ ARG APP_VERSION=${APP_VERSION}
 
 LABEL org.opencontainers.image.title="jellyfin-whatsapp"
 LABEL org.opencontainers.image.version="${APP_VERSION}"
-LABEL org.opencontainers.image.description="A notification system that sends messages to WhatsApp when new media is added to Jellyfin."
+LABEL org.opencontainers.image.description="A decoupled, lightweight notification engine built for Raspberry Pi to automatically aggregate newly added media from Jellyfin and send structured updates with official poster art to users via WhatsApp."
 LABEL maintainer="hfilippi"
 
 ENV APP_VERSION=${APP_VERSION}

@@ -9,11 +9,12 @@ services:
       args:
         - APP_VERSION=${APP_VERSION}
 
+    cpus: 2.0
+    shm_size: "1gb"
+
     ports:
       - "8000:8000"
       - "3000:3000"
-
-    shm_size: "1gb"
 
     volumes:
       - ./data:/data
@@ -23,3 +24,4 @@ services:
       TZ: America/Argentina/Buenos_Aires
       PYTHONUNBUFFERED: "1"
       APP_VERSION: ${APP_VERSION}
+      NODE_OPTIONS: "--unhandled-rejections=warn"
