@@ -1,8 +1,9 @@
 import axios from 'axios';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import pkg from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
-import fs from 'fs';
 
 const { Client, LocalAuth, MessageMedia } = pkg;
 
@@ -26,7 +27,7 @@ function loadConfigsOnStartup() {
             finalStructureTemplate = templates.final_structure || finalStructureTemplate;
             trailerBlockTemplate = templates.trailer_block || trailerBlockTemplate;
         } catch (error) {
-            console.error('⚠️ [WARN] Failed to parse templates.json, using default structure:', error);
+            console.warn('⚠️ [WARN] Failed to parse templates.json, using default structure:', error);
         }
     }
 
@@ -36,7 +37,7 @@ function loadConfigsOnStartup() {
             const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
             tmdbConfig = config.tmdb || {};
         } catch (error) {
-            console.error('⚠️ [WARN] Failed to parse config.json:', error);
+            console.warn('⚠️ [WARN] Failed to parse config.json:', error);
         }
     }
 }
@@ -49,11 +50,10 @@ const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '/data/session'
     }),
-    authTimeoutMs: 300000,
     webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html'
+        type: 'local'
     },
+    authTimeoutMs: 300000,
     puppeteer: {
         headless: true,
         executablePath: process.env.CHROME_BIN || '/usr/bin/chromium',
@@ -75,7 +75,8 @@ const client = new Client({
             '--disable-renderer-backgrounding',
             '--font-render-hinting=none',
             '--disable-software-rasterizer',
-            '--disable-features=site-per-process',
+            '--disable-site-isolation-trials',
+            '--disable-features=IsolateOrigins,site-per-process',
             '--js-flags=--max-old-space-size=512 --max-semi-space-size=64',
             '--compression-dict-transport=disabled'
         ]
@@ -130,7 +131,7 @@ client.on('auth_failure', msg => {
 
 // Handle client disconnection with error logging and potential auto-restart logic (if needed in the future)
 client.on('disconnected', reason => {
-    console.error('⚠️ [WARN] WhatsApp disconnected:', reason);
+    console.warn('⚠️ [WARN] WhatsApp disconnected:', reason);
 });
 
 // Handle incoming messages for unsubscription requests, with robust phone number matching and error handling
@@ -164,11 +165,44 @@ client.on('message', async msg => {
                     console.log(`⚠️ The number ${senderPhone} sent "unsubscribe" but was not active or not found in users.json`);
                 }
             } catch (error) {
-                console.error('💥 Error processing the unsubscribe:', error);
+                console.error('❌ [ERROR] Error processing the unsubscribe:', error);
             }
         }
     }
 });
+
+// Function to clean up orphaned Chromium lock files to prevent startup issues, with recursive directory traversal and error handling
+function cleanChromiumLocks(dirPath) {
+    if (!fs.existsSync(dirPath)) return;
+
+    try {
+        const files = fs.readdirSync(dirPath);
+        for (const file of files) {
+            const fullPath = path.join(dirPath, file);
+            try {
+                const stat = fs.lstatSync(fullPath);
+                if (stat.isDirectory()) {
+                    cleanChromiumLocks(fullPath); // Recorrido recursivo
+                } else if (file.startsWith('Singleton')) {
+                    fs.unlinkSync(fullPath);
+                    console.log(`🧹 [CLEANUP] Removed orphan Chromium lock: ${file}`);
+                }
+            } catch (err) {
+                if (file.startsWith('Singleton')) {
+                    try { fs.unlinkSync(fullPath); } catch (_) {}
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ [WARN] Could not clean Chromium locks:', err.message);
+    }
+}
+
+// Clean up any orphaned Chromium lock files before starting the client to prevent startup issues
+cleanChromiumLocks('/data/session');
+
+// Start the WhatsApp client
+client.initialize();
 
 // Start the WhatsApp client
 client.initialize();
@@ -192,9 +226,17 @@ app.post('/send-media', async (request, response) => {
             return response.status(503).json({ error: 'WhatsApp Client is not ready yet' });
         }
 
-        // Normalize the phone number to ensure it only contains digits and construct the chat ID for WhatsApp
+        // Normalize the phone number to remove any non-digit characters and get the WhatsApp number ID
         const normalizedTo = to.replace(/\D/g, '');
-        const chatId = `${normalizedTo}@c.us`;
+        const numberId = await client.getNumberId(normalizedTo);
+
+        if (!numberId) {
+            console.warn(`⚠️ [WARN] The number ${normalizedTo} is not registered on WhatsApp or format is invalid.`);
+            return response.status(404).json({ error: `Phone number ${normalizedTo} is not registered on WhatsApp` });
+        }
+
+        // Construct the chat ID in the format required by WhatsApp
+        const chatId = numberId._serialized;
 
         // Get media from URL and trailer URL (if tmdb_id is provided)
         const media = await getMediaFromUrl(image_url);
@@ -216,7 +258,7 @@ app.post('/send-media', async (request, response) => {
 
         response.json({ success: true });
     } catch (err) {
-        console.error(err);
+        console.error('❌ [ERROR] Error in /send-media:', err);
         response.status(500).json({ error: err.message });
     }
 });
@@ -233,7 +275,7 @@ async function getMediaFromUrl(url) {
 
         return new MessageMedia(mimeType, Buffer.from(response.data).toString('base64'), "media.jpg");
     } catch (err) {
-        console.error('❌ Failed to download media from URL:', url);
+        console.error('❌ [ERROR] Failed to download media from URL:', url);
         throw err;
     }
 }
@@ -259,7 +301,7 @@ async function getTrailerUrl(tmdbId) {
         const lang = tmdbConfig.language || 'en';
 
         if (!tmdbApiKey) {
-            console.error('⚠️ [WARN] TMDB API Key is missing in config.json');
+            console.warn('⚠️ [WARN] TMDB API Key is missing in config.json');
             return null;
         }
 
@@ -290,7 +332,7 @@ async function getTrailerUrl(tmdbId) {
 
         return trailerUrl;
     } catch (err) {
-        console.error('⚠️ [WARN] Failed to fetch trailer from TMDB:', err.message);
+        console.warn('⚠️ [WARN] Failed to fetch trailer from TMDB:', err.message);
         return null;
     }
 }

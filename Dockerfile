@@ -5,12 +5,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV CHROME_BIN=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
 # Install dependencies
-RUN apt-get update && apt-get install -y curl wget gnupg supervisor chromium chromium-driver fonts-liberation libatk-bridge2.0-0t64 libgtk-3-0t64 libnss3 libxss1 libasound2t64 xdg-utils ca-certificates nodejs npm && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl wget gnupg supervisor chromium chromium-driver fonts-liberation libatk-bridge2.0-0t64 libgtk-3-0t64 libnss3 libxss1 libasound2t64 xdg-utils ca-certificates nodejs npm && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js dependencies
 COPY package.json package-lock.json* ./

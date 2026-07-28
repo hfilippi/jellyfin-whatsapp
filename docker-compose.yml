@@ -10,11 +10,15 @@ services:
         - APP_VERSION=${APP_VERSION}
 
     cpus: 2.0
-    shm_size: "1gb"
+    shm_size: "2gb"
 
     ports:
       - "8000:8000"
       - "3000:3000"
+
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
     volumes:
       - ./data:/data
