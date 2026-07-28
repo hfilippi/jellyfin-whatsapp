@@ -1,9 +1,17 @@
 import axios from 'axios';
+import { execSync } from 'child_process';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import pkg from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
+
+// Kill any orphaned Chromium processes to prevent conflicts with Puppeteer
+try {
+    execSync('pkill -9 -f chromium || true');
+    console.log('🧹 [CLEANUP] Killed orphan Chromium processes');
+} catch (e) {}
+// ---
 
 const { Client, LocalAuth, MessageMedia } = pkg;
 
@@ -182,13 +190,13 @@ function cleanChromiumLocks(dirPath) {
             try {
                 const stat = fs.lstatSync(fullPath);
                 if (stat.isDirectory()) {
-                    cleanChromiumLocks(fullPath); // Recorrido recursivo
-                } else if (file.startsWith('Singleton')) {
+                    cleanChromiumLocks(fullPath);
+                } else if (file.startsWith('Singleton') || file === 'DevToolsActivePort' || file.endsWith('.lock')) {
                     fs.unlinkSync(fullPath);
-                    console.log(`🧹 [CLEANUP] Removed orphan Chromium lock: ${file}`);
+                    console.log(`🧹 [CLEANUP] Removed orphan lock/port file: ${file}`);
                 }
             } catch (err) {
-                if (file.startsWith('Singleton')) {
+                if (file.startsWith('Singleton') || file === 'DevToolsActivePort') {
                     try { fs.unlinkSync(fullPath); } catch (_) {}
                 }
             }
