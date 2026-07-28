@@ -11,7 +11,36 @@ try {
     execSync('pkill -9 -f chromium || true');
     console.log('🧹 [CLEANUP] Killed orphan Chromium processes');
 } catch (e) {}
-// ---
+
+// Function to clean up orphaned Chromium lock files to prevent startup issues, with recursive directory traversal and error handling
+function cleanChromiumLocks(dirPath) {
+    if (!fs.existsSync(dirPath)) return;
+
+    try {
+        const files = fs.readdirSync(dirPath);
+        for (const file of files) {
+            const fullPath = path.join(dirPath, file);
+            try {
+                const stat = fs.lstatSync(fullPath);
+                if (stat.isDirectory()) {
+                    cleanChromiumLocks(fullPath);
+                } else if (file.startsWith('Singleton') || file === 'DevToolsActivePort' || file.endsWith('.lock')) {
+                    fs.unlinkSync(fullPath);
+                    console.log(`🧹 [CLEANUP] Removed orphan lock/port file: ${file}`);
+                }
+            } catch (err) {
+                if (file.startsWith('Singleton') || file === 'DevToolsActivePort') {
+                    try { fs.unlinkSync(fullPath); } catch (_) {}
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ [WARN] Could not clean Chromium locks:', err.message);
+    }
+}
+
+// Clean up any orphaned Chromium lock files before starting the client to prevent startup issues
+cleanChromiumLocks('/data/session');
 
 const { Client, LocalAuth, MessageMedia } = pkg;
 
@@ -178,39 +207,6 @@ client.on('message', async msg => {
         }
     }
 });
-
-// Function to clean up orphaned Chromium lock files to prevent startup issues, with recursive directory traversal and error handling
-function cleanChromiumLocks(dirPath) {
-    if (!fs.existsSync(dirPath)) return;
-
-    try {
-        const files = fs.readdirSync(dirPath);
-        for (const file of files) {
-            const fullPath = path.join(dirPath, file);
-            try {
-                const stat = fs.lstatSync(fullPath);
-                if (stat.isDirectory()) {
-                    cleanChromiumLocks(fullPath);
-                } else if (file.startsWith('Singleton') || file === 'DevToolsActivePort' || file.endsWith('.lock')) {
-                    fs.unlinkSync(fullPath);
-                    console.log(`🧹 [CLEANUP] Removed orphan lock/port file: ${file}`);
-                }
-            } catch (err) {
-                if (file.startsWith('Singleton') || file === 'DevToolsActivePort') {
-                    try { fs.unlinkSync(fullPath); } catch (_) {}
-                }
-            }
-        }
-    } catch (err) {
-        console.warn('⚠️ [WARN] Could not clean Chromium locks:', err.message);
-    }
-}
-
-// Clean up any orphaned Chromium lock files before starting the client to prevent startup issues
-cleanChromiumLocks('/data/session');
-
-// Start the WhatsApp client
-client.initialize();
 
 // Start the WhatsApp client
 client.initialize();
