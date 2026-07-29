@@ -114,7 +114,6 @@ const client = new Client({
             '--disable-software-rasterizer',
             '--disable-site-isolation-trials',
             '--disable-features=IsolateOrigins,site-per-process',
-            '--js-flags=--max-old-space-size=512 --max-semi-space-size=64',
             '--compression-dict-transport=disabled'
         ]
     }
@@ -169,6 +168,7 @@ client.on('auth_failure', msg => {
 // Handle client disconnection with error logging and potential auto-restart logic (if needed in the future)
 client.on('disconnected', reason => {
     console.warn('⚠️ [WARN] WhatsApp disconnected:', reason);
+    isReady = false;
 });
 
 // Handle incoming messages for unsubscription requests, with robust phone number matching and error handling
